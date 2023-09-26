@@ -1,0 +1,24 @@
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
+
+describe("FerroRewards Smart Contract - Unit Testing", function () {
+    let ferroRewards;
+    let owner;
+    let wallet1;
+    let wallet2;
+  
+    beforeEach(async () => {
+        [owner, wallet1, wallet2] = await ethers.getSigners();
+        
+        const FerroRewards = await ethers.getContractFactory("FerroRewards");
+        ferroRewards = await FerroRewards.deploy();
+
+        return { ferroRewards, owner, wallet1, wallet2 };
+    });
+
+
+    it("Should set the owner correctly", async function () {
+        expect(await ferroRewards.owner()).to.equal(owner.address);
+    });
+
+});

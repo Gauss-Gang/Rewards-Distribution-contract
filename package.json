@@ -1,0 +1,24 @@
+{
+  "name": "rewardsdistribution-contract",
+  "version": "1.0.0",
+  "description": "This contract handles the rewards distribution to our Ferro Card Holders.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gauss-Gang/RewardsDistribution-contract.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Gauss-Gang/RewardsDistribution-contract/issues"
+  },
+  "homepage": "https://github.com/Gauss-Gang/RewardsDistribution-contract#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.17.3"
+  }
+}
