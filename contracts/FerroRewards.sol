@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.8.19;
 
 // Uncomment this line to use console.log
@@ -33,6 +33,16 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         uint256 allocationPercentage;
         uint256 balance;
     }
+
+/* Testing:
+
+    mapping(address => mapping(address => uint256)) public rewardsBalance;
+    uint256 private constant _IronPercentage = 5000;
+    
+    mapping(uint256 => address) public addresses;
+    mapping(uint256 => uint256) public amounts;
+    uint256 currentIndex = 50;
+*/
 
     NFTPool[] public nftPools;
 
