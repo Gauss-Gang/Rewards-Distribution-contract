@@ -21,23 +21,24 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     address public cobaltNFTContract;
 
     uint256 private immutable _precisionFactor = 10000;
-    uint256 public lastAirdropBlock;
 
     bool public _paused;
 
-    // Structs & Events
+    // Events
 
-    // Define the NFT pools and their allocations
-    struct NFTPool {
-        IERC721 nftContract;
-        uint256 allocationPercentage;
-        uint256 balance;
-    }
+    // Event to log when the contract is paused
+    event PausedContract(address account);
 
-/* Testing:
+    // Event to log when the contract is unpaused
+    event UnpausedContract(address account);
+
+
+    /* Testing:
 
     mapping(address => mapping(address => uint256)) public rewardsBalance;
     uint256 private constant _IronPercentage = 5000;
+    uint256 private constant _NickelPercentage = 3000;
+    uint256 private constant _CobaltPercentage = 2000;
     
     mapping(uint256 => address) public addresses;
     mapping(uint256 => uint256) public amounts;
@@ -46,21 +47,13 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
 
     NFTPool[] public nftPools;
 
-    // Event to log when the contract is paused
-    event PausedContract(address account);
-
-    // Event to log when the contract is unpaused
-    event UnpausedContract(address account);
+    
 
     // Maybe add events for airdrops?
 
     // Mapping to store the total amount distributed to each NFT pool
     mapping(address => uint256) public totalAmountDistributed;
 
-    // Separate mappings for each NFT tier to hold reward token addresses and amounts to distribute
-    mapping(address => uint256) public distributionAmountIronNFT;
-    mapping(address => uint256) public distributionAmountNickelNFT;
-    mapping(address => uint256) public distributionAmountCobaltNFT;
 
     // Mappings to keep track of token & NFT distributions
     mapping(address => uint256) public totalTokenDistribution;
@@ -79,31 +72,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         ironNFTContract = _ironNFTContract;
         nickelNFTContract = _nickelNFTContract;
         cobaltNFTContract = _cobaltNFTContract;
-
-        // Initializing the NFT pools
-        nftPools.push(
-            NFTPool({
-                nftContract: IERC721(ironNFTContract),
-                allocationPercentage: 5000,
-                balance: 0
-            })
-        );
-
-        nftPools.push(
-            NFTPool({
-                nftContract: IERC721(nickelNFTContract),
-                allocationPercentage: 3000,
-                balance: 0
-            })
-        );
-
-        nftPools.push(
-            NFTPool({
-                nftContract: IERC721(cobaltNFTContract),
-                allocationPercentage: 2000,
-                balance: 0
-            })
-        );
     }
 
     // Pause Token Trading and Transfers
@@ -116,37 +84,34 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         super._unpause();
     }
 
-    // Function to deposit ERC20 tokens
-    function depositTokens(
-        uint256 amount,
-        address tokenAddress
-    ) external onlyOwner {
-        require(amount > 0, "Amount must be greater than zero");
-        require(tokenAddress != address(0), "Invalid token address");
+    function depositTokens(uint256 amount, address tokenAddress) external onlyOwner {
+    require(amount > 0, "Amount must be greater than zero");
+    require(tokenAddress != address(0), "Invalid token address");
 
-        IERC20 tokenToDeposit = IERC20(tokenAddress);
-        require(
-            tokenToDeposit.transferFrom(msg.sender, address(this), amount),
-            "Token transfer failed"
-        );
+    IERC20 tokenToDeposit = IERC20(tokenAddress);
+    require(
+        tokenToDeposit.transferFrom(msg.sender, address(this), amount),
+        "Token transfer failed"
+    );
 
-        // Check if the token address is not already in the array
-        bool exists = false;
-        for (uint256 i = 0; i < depositedTokens.length; i++) {
-            if (depositedTokens[i] == tokenAddress) {
-                exists = true;
-                break;
-            }
+    // Check if the token address is not already in the array
+    bool exists = false;
+    for (uint256 i = 0; i < depositedTokens.length; i++) {
+        if (depositedTokens[i] == tokenAddress) {
+            exists = true;
+            break;
         }
-
-        // If the token address is not in the array, add it
-        if (!exists) {
-            depositedTokens.push(tokenAddress);
-        }
-
-        // Call NFT distribution
-        NFTdistribution(amount, tokenAddress);
     }
+
+    // If the token address is not in the array, add it
+    if (!exists) {
+        depositedTokens.push(tokenAddress);
+    }
+
+    // Call NFT distribution for all NFT pools
+    NFTdistribution(amount);
+}
+
 
     // Function to deposit NFTs
     function depositNFTs(
@@ -185,58 +150,43 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     }
 
     // Function to distribute tokens to NFT pools based on NFT ownership
-    function NFTdistribution(
-        uint256 amount,
-        address tokenAddress
-    ) internal whenNotPaused {
-        require(amount > 0, "Amount must be greater than zero");
+    function NFTdistribution(uint256 amount) internal whenNotPaused {
+    require(amount > 0, "Amount must be greater than zero");
 
-        uint256 totalAllocation = 0; // Total allocation for the three NFT pools
+    uint256 totalAllocation = 0; // Total allocation for the three NFT pools
 
-        for (uint256 i = 0; i < nftPools.length; i++) {
-            uint256 allocation = Math.mulDiv(
-                amount,
-                nftPools[i].allocationPercentage,
-                _precisionFactor,
-                Math.Rounding.Trunc
-            );
-            console.log(amount);
-            console.log(allocation);
-            totalAllocation += allocation; // Update the total allocation
-
-            nftPools[i].balance += allocation;
-
-            // Update the total amount distributed to this NFT pool for the specific token
-            if (i == 0) {
-                distributionAmountIronNFT[tokenAddress][
-                    address(nftPools[i].nftContract)
-                ] += allocation;
-            } else if (i == 1) {
-                distributionAmountNickelNFT[tokenAddress][
-                    address(nftPools[i].nftContract)
-                ] += allocation;
-            } else if (i == 2) {
-                distributionAmountCobaltNFT[tokenAddress][
-                    address(nftPools[i].nftContract)
-                ] += allocation;
-            }
+    for (uint256 i = 0; i < nftPools.length; i++) {
+        uint256 allocation;
+        if (i == 0) {
+            allocation = (amount * _IronPercentage) / 10000;
+        } else if (i == 1) {
+            allocation = (amount * _NickelPercentage) / 10000;
+        } else if (i == 2) {
+            allocation = (amount * _CobaltPercentage) / 10000;
         }
-        console.log(totalAllocation, amount);
-        // Check if the total distributed amount matches the expected total allocation
-        require(
-            totalAllocation <= amount,
-            "Total distribution does not match allocations"
-        );
+
+        totalAllocation += allocation; // Update the total allocation
+
+        nftPools[i].balance += allocation;
+
+        // Update the rewards balance mapping for each NFT contract address
+        rewardsBalance[address(nftPools[i].nftContract)][tokenAddress] += allocation;
     }
+    console.log(totalAllocation, amount);
+    // Check if the total distributed amount matches the expected total allocation
+    require(
+        totalAllocation <= amount,
+        "Total distribution does not match allocations"
+    );
+    }
+
+
 
     // Function to distribute tokens to NFT holders
     function airdropTokens(
         address[] calldata recipients
     ) external onlyOwner whenNotPaused {
-        require(
-            block.number - lastAirdropBlock >= 1800,
-            "Airdrop interval not reached"
-        ); // Change the blocknumber difference for faster / slower airdrops.
+
         require(recipients.length > 0, "No recipients provided");
 
         // Iterate through the deposited tokens
@@ -309,8 +259,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
                     recipientsToTransfer,
                     amountsToTransfer
                 ); */
-                    // Update the last airdrop block
-                    lastAirdropBlock = block.number;
                     // Update totalTokenDistribution for this token
                     totalTokenDistribution[tokenAddress] += nftPoolBalance;
                 }
