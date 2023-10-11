@@ -32,7 +32,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     // Event to log when the contract is unpaused
     event UnpausedContract(address account);
 
-
     /* Testing:
 
     mapping(address => mapping(address => uint256)) public rewardsBalance;
@@ -47,17 +46,12 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
 
     NFTPool[] public nftPools;
 
-    
-
     // Maybe add events for airdrops?
-
-    // Mapping to store the total amount distributed to each NFT pool
-    mapping(address => uint256) public totalAmountDistributed;
 
 
     // Mappings to keep track of token & NFT distributions
     mapping(address => uint256) public totalTokenDistribution;
-    mapping(address => mapping(address => uint256[])) public nftDistributions;
+    
 
     // Array to store unique token & NFT contract addresses deposited by the owner
     address[] public depositedTokens;
@@ -84,109 +78,74 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         super._unpause();
     }
 
-    function depositTokens(uint256 amount, address tokenAddress) external onlyOwner {
-    require(amount > 0, "Amount must be greater than zero");
-    require(tokenAddress != address(0), "Invalid token address");
-
-    IERC20 tokenToDeposit = IERC20(tokenAddress);
-    require(
-        tokenToDeposit.transferFrom(msg.sender, address(this), amount),
-        "Token transfer failed"
-    );
-
-    // Check if the token address is not already in the array
-    bool exists = false;
-    for (uint256 i = 0; i < depositedTokens.length; i++) {
-        if (depositedTokens[i] == tokenAddress) {
-            exists = true;
-            break;
-        }
-    }
-
-    // If the token address is not in the array, add it
-    if (!exists) {
-        depositedTokens.push(tokenAddress);
-    }
-
-    // Call NFT distribution for all NFT pools
-    NFTdistribution(amount);
-}
-
-
-    // Function to deposit NFTs
-    function depositNFTs(
-        address nftContractAddress,
-        uint256[] calldata tokenIds
+    function depositTokens(
+        uint256 amount,
+        address tokenAddress
     ) external onlyOwner {
+        require(amount > 0, "Amount must be greater than zero");
+        require(tokenAddress != address(0), "Invalid token address");
+
+        IERC20 tokenToDeposit = IERC20(tokenAddress);
         require(
-            nftContractAddress != address(0),
-            "Invalid NFT contract address"
+            tokenToDeposit.transferFrom(msg.sender, address(this), amount),
+            "Token transfer failed"
         );
-        require(tokenIds.length > 0, "No NFTs to deposit");
 
-        // Transfer NFTs to this contract
-        IERC721 nftContract = IERC721(nftContractAddress);
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            nftContract.transferFrom(msg.sender, address(this), tokenId);
-
-            // Update NFT distributions
-            nftDistributions[nftContractAddress][msg.sender].push(tokenId);
-        }
-
-        // Check if the NFT contract address is not already in the array
+        // Check if the token address is not already in the array
         bool exists = false;
-        for (uint256 i = 0; i < depositedNFTContracts.length; i++) {
-            if (depositedNFTContracts[i] == nftContractAddress) {
+        for (uint256 i = 0; i < depositedTokens.length; i++) {
+            if (depositedTokens[i] == tokenAddress) {
                 exists = true;
                 break;
             }
         }
 
-        // If the NFT contract address is not in the array, add it
+        // If the token address is not in the array, add it
         if (!exists) {
-            depositedNFTContracts.push(nftContractAddress);
+            depositedTokens.push(tokenAddress);
         }
+
+        // Call NFT distribution for all NFT pools
+        tokenDistribution(amount);
     }
 
     // Function to distribute tokens to NFT pools based on NFT ownership
-    function NFTdistribution(uint256 amount) internal whenNotPaused {
-    require(amount > 0, "Amount must be greater than zero");
+    function tokenDistribution(uint256 amount) internal whenNotPaused {
+        require(amount > 0, "Amount must be greater than zero");
 
-    uint256 totalAllocation = 0; // Total allocation for the three NFT pools
+        uint256 totalAllocation = 0; // Total allocation for the three NFT pools
 
-    for (uint256 i = 0; i < nftPools.length; i++) {
-        uint256 allocation;
-        if (i == 0) {
-            allocation = (amount * _IronPercentage) / 10000;
-        } else if (i == 1) {
-            allocation = (amount * _NickelPercentage) / 10000;
-        } else if (i == 2) {
-            allocation = (amount * _CobaltPercentage) / 10000;
+        for (uint256 i = 0; i < nftPools.length; i++) {
+            uint256 allocation;
+            if (i == 0) {
+                allocation = (amount * _IronPercentage) / 10000;
+            } else if (i == 1) {
+                allocation = (amount * _NickelPercentage) / 10000;
+            } else if (i == 2) {
+                allocation = (amount * _CobaltPercentage) / 10000;
+            }
+
+            totalAllocation += allocation; // Update the total allocation
+
+            nftPools[i].balance += allocation;
+
+            // Update the rewards balance mapping for each NFT contract address
+            rewardsBalance[address(nftPools[i].nftContract)][
+                tokenAddress
+            ] += allocation;
         }
-
-        totalAllocation += allocation; // Update the total allocation
-
-        nftPools[i].balance += allocation;
-
-        // Update the rewards balance mapping for each NFT contract address
-        rewardsBalance[address(nftPools[i].nftContract)][tokenAddress] += allocation;
+        console.log(totalAllocation, amount);
+        // Check if the total distributed amount matches the expected total allocation
+        require(
+            totalAllocation <= amount,
+            "Total distribution does not match allocations"
+        );
     }
-    console.log(totalAllocation, amount);
-    // Check if the total distributed amount matches the expected total allocation
-    require(
-        totalAllocation <= amount,
-        "Total distribution does not match allocations"
-    );
-    }
-
-
 
     // Function to distribute tokens to NFT holders
     function airdropTokens(
         address[] calldata recipients
     ) external onlyOwner whenNotPaused {
-
         require(recipients.length > 0, "No recipients provided");
 
         // Iterate through the deposited tokens
@@ -266,65 +225,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         }
     }
 
-    // Function to distribute NFTs to NFT holders
-    function distributeNFTs(
-        address[] calldata recipients,
-        uint256[] calldata tokenIds
-    ) external onlyOwner whenNotPaused {
-        require(
-            recipients.length == tokenIds.length,
-            "Invalid input parameters"
-        );
-
-        for (uint256 i = 0; i < recipients.length; i++) {
-            address recipient = recipients[i];
-            uint256 tokenId = tokenIds[i];
-
-            // Iterate through the NFT pools and transfer NFTs to recipients
-            for (
-                uint256 poolIndex = 0;
-                poolIndex < nftPools.length;
-                poolIndex++
-            ) {
-                NFTPool storage pool = nftPools[poolIndex];
-                address nftContractAddress = address(pool.nftContract);
-
-                if (nftContractAddress == ironNFTContract) {
-                    require(
-                        distributionAmountIronNFT[nftContractAddress][
-                            recipient
-                        ] > 0,
-                        "No NFTs available for distribution"
-                    );
-                } else if (nftContractAddress == nickelNFTContract) {
-                    require(
-                        distributionAmountNickelNFT[nftContractAddress][
-                            recipient
-                        ] > 0,
-                        "No NFTs available for distribution"
-                    );
-                } else if (nftContractAddress == cobaltNFTContract) {
-                    require(
-                        distributionAmountCobaltNFT[nftContractAddress][
-                            recipient
-                        ] > 0,
-                        "No NFTs available for distribution"
-                    );
-                }
-
-                // Transfer the NFT to the recipient
-                pool.nftContract.safeTransferFrom(
-                    address(this),
-                    recipient,
-                    tokenId
-                );
-
-                // Update NFT distributions
-                nftDistributions[nftContractAddress][msg.sender].push(tokenId);
-            }
-        }
-    }
-
     // Function to get the current balance of an NFT pool - is this even needed?
     function getNFTPoolBalance(
         uint256 poolIndex
@@ -333,12 +233,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         return nftPools[poolIndex].balance;
     }
 
-    // Function to get the total amount distributed to an NFT pool
-    function getTotalDistributedToNFTPool(
-        address nftPoolAddress
-    ) external view returns (uint256) {
-        return totalAmountDistributed[nftPoolAddress];
-    }
 
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
