@@ -32,13 +32,12 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     // Event to log when the contract is unpaused
     event UnpausedContract(address account);
 
-    /* Testing:
 
     mapping(address => mapping(address => uint256)) public rewardsBalance;
     uint256 private constant _IronPercentage = 5000;
     uint256 private constant _NickelPercentage = 3000;
     uint256 private constant _CobaltPercentage = 2000;
-    
+    /*
     mapping(uint256 => address) public addresses;
     mapping(uint256 => uint256) public amounts;
     uint256 currentIndex = 50;
@@ -48,14 +47,11 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
 
     // Maybe add events for airdrops?
 
-
     // Mappings to keep track of token & NFT distributions
     mapping(address => uint256) public totalTokenDistribution;
-    
 
     // Array to store unique token & NFT contract addresses deposited by the owner
     address[] public depositedTokens;
-    address[] public depositedNFTContracts;
 
     constructor(
         address _ironNFTContract,
@@ -232,7 +228,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         require(poolIndex < nftPools.length, "Invalid pool index");
         return nftPools[poolIndex].balance;
     }
-
 
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
