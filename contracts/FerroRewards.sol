@@ -32,7 +32,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     // Event to log when the contract is unpaused
     event UnpausedContract(address account);
 
-
     mapping(address => mapping(address => uint256)) public rewardsBalance;
     uint256 private constant _IronPercentage = 5000;
     uint256 private constant _NickelPercentage = 3000;
@@ -42,8 +41,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     mapping(uint256 => uint256) public amounts;
     uint256 currentIndex = 50;
 */
-
-    NFTPool[] public nftPools;
 
     // Maybe add events for airdrops?
 
@@ -102,42 +99,34 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         }
 
         // Call NFT distribution for all NFT pools
-        tokenDistribution(amount);
+        tokenDistribution(amount, tokenAddress);
     }
 
     // Function to distribute tokens to NFT pools based on NFT ownership
-    function tokenDistribution(uint256 amount) internal whenNotPaused {
+    function tokenDistribution(
+        uint256 amount,
+        address tokenAddress
+    ) internal whenNotPaused {
         require(amount > 0, "Amount must be greater than zero");
 
-        uint256 totalAllocation = 0; // Total allocation for the three NFT pools
+        uint256 ironAllocation = (amount * _IronPercentage) / 10000;
+        uint256 nickelAllocation = (amount * _NickelPercentage) / 10000;
+        uint256 cobaltAllocation = (amount * _CobaltPercentage) / 10000;
 
-        for (uint256 i = 0; i < nftPools.length; i++) {
-            uint256 allocation;
-            if (i == 0) {
-                allocation = (amount * _IronPercentage) / 10000;
-            } else if (i == 1) {
-                allocation = (amount * _NickelPercentage) / 10000;
-            } else if (i == 2) {
-                allocation = (amount * _CobaltPercentage) / 10000;
-            }
-
-            totalAllocation += allocation; // Update the total allocation
-
-            nftPools[i].balance += allocation;
-
-            // Update the rewards balance mapping for each NFT contract address
-            rewardsBalance[address(nftPools[i].nftContract)][
-                tokenAddress
-            ] += allocation;
-        }
-        console.log(totalAllocation, amount);
+        rewardsBalance[ironNFTContract][tokenAddress] += ironAllocation;
+        rewardsBalance[nickelNFTContract][tokenAddress] += nickelAllocation;
+        rewardsBalance[cobaltNFTContract][tokenAddress] += cobaltAllocation;
         // Check if the total distributed amount matches the expected total allocation
+        uint256 totalAllocation = ironAllocation +
+            nickelAllocation +
+            cobaltAllocation;
         require(
             totalAllocation <= amount,
             "Total distribution does not match allocations"
         );
     }
 
+    /*
     // Function to distribute tokens to NFT holders
     function airdropTokens(
         address[] calldata recipients
@@ -213,34 +202,20 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
                     IERC20(tokenAddress),
                     recipientsToTransfer,
                     amountsToTransfer
-                ); */
+                ); 
                     // Update totalTokenDistribution for this token
                     totalTokenDistribution[tokenAddress] += nftPoolBalance;
                 }
             }
         }
     }
-
+    */
     // Function to get the current balance of an NFT pool - is this even needed?
-    function getNFTPoolBalance(
-        uint256 poolIndex
-    ) external view returns (uint256) {
-        require(poolIndex < nftPools.length, "Invalid pool index");
-        return nftPools[poolIndex].balance;
-    }
+    function getNFTPoolBalance() external view returns (uint256) {}
 
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
         return depositedTokens;
-    }
-
-    // Function to get the array of deposited NFT contract addresses
-    function getDepositedNFTContracts()
-        external
-        view
-        returns (address[] memory)
-    {
-        return depositedNFTContracts;
     }
 
     // Function to check if the contract is paused
