@@ -61,6 +61,9 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         cobaltNFTContract = _cobaltNFTContract;
     }
 
+    // Receive function to allow the contract to receives Native Currency 
+    receive() external payable {}
+
     // Pause Token Trading and Transfers
     function pause() public onlyOwner {
         super._pause();
