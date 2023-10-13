@@ -212,10 +212,10 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
             }
         }
     }
-    */
+    
     // Function to get the current balance of an NFT pool - is this even needed?
     function getNFTPoolBalance() external view returns (uint256) {}
-
+    */
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
         return depositedTokens;
