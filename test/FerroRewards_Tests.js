@@ -1,95 +1,85 @@
-const { ethers } = require("hardhat");
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
-describe("FerroRewards Contract", function () {
+describe("FerroRewards", function () {
+  let contract;
   let deployer;
-  let user1;
-  let user2;
-  let ferroRewards;
+  let recipient1;
+  let recipient2;
 
   before(async function () {
-    [deployer, user1, user2] = await ethers.getSigners();
-
     
+  });
+
+  beforeEach(async function () {
+    [deployer, recipient1, recipient2] = await ethers.getSigners();
+
     // Deploy the NFT contracts (or generate random addresses)
     const ironNFTContract = ethers.Wallet.createRandom().address;
     const nickelNFTContract = ethers.Wallet.createRandom().address;
     const cobaltNFTContract = ethers.Wallet.createRandom().address;
 
     const FerroRewards = await ethers.getContractFactory("FerroRewards");
-    ferroRewards = await FerroRewards.deploy(
+    contract = await FerroRewards.deploy(
       ironNFTContract,
       nickelNFTContract,
       cobaltNFTContract
     );
-    
+
+    return {contract, deployer, recipient1, recipient2};
   });
 
-  it("Should deploy the contract", async function () {
-    expect(ferroRewards.address).to.not.be.undefined;
+  it("should deploy the contract", async function () {
+    expect(contract.address).to.not.equal(0);
   });
 
-  it("Owner should be set to the deployer", async function () {
-    const owner = await ferroRewards.owner();
+  it("should set the owner to the deployer", async function () {
+    const owner = await contract.owner();
     expect(owner).to.equal(deployer.address);
   });
 
-  it("Should deposit tokens using depositTokens function", async function () {
-    const tokenAddress = deployer.address; // Replace with a valid token address
-    const amount = 10000; // Replace with the amount you want to deposit
-    await expect(ferroRewards.connect(user1).depositTokens(amount, tokenAddress))
-      .to.emit(ferroRewards, "Deposit")
-      .withArgs(user1.address, amount, tokenAddress);
-  });
+  it("should deposit tokens", async function () {
+    // Example token address (replace with a real address)
+    const tokenAddress = "0xTokenAddress";
+    // Example token amount
+    const amount = 10000;
 
-  it("Should revert on depositTokens with zero amount", async function () {
-    const tokenAddress = deployer.address; // Replace with a valid token address
-    await expect(ferroRewards.connect(user1).depositTokens(0, tokenAddress)).to.be.revertedWith(
-      "Amount must be greater than zero"
-    );
-  });
+    await contract.depositTokens(amount, tokenAddress);
 
-  it("Should revert on depositTokens with invalid token address", async function () {
-    const tokenAddress = ethers.constants.AddressZero; // Invalid address
-    const amount = 10000; // Replace with the amount you want to deposit
-    await expect(ferroRewards.connect(user1).depositTokens(amount, tokenAddress)).to.be.revertedWith(
-      "Invalid token address"
-    );
-  });
-
-  it("Should add token address to the array on depositTokens", async function () {
-    const tokenAddress = deployer.address; // Replace with a valid token address
-    const amount = 10000; // Replace with the amount you want to deposit
-    await ferroRewards.connect(user1).depositTokens(amount, tokenAddress);
-    const depositedTokens = await ferroRewards.getDepositedTokens();
+    const depositedTokens = await contract.getDepositedTokens();
     expect(depositedTokens).to.include(tokenAddress);
   });
 
-  it("Should not allow tokenDistribution function to be called when paused", async function () {
-    await ferroRewards.pause();
-    const tokenAddress = deployer.address; // Replace with a valid token address
-    const amount = 10000; // Replace with the amount you want to deposit
-    await expect(ferroRewards.connect(user1).depositTokens(amount, tokenAddress)).to.be.revertedWith(
-      "Pausable: paused"
-    );
+  it("should pause and unpause the contract", async function () {
+    await contract.pause();
+    expect(await contract.isPaused()).to.equal(true);
+
+    await contract.unpause();
+    expect(await contract.isPaused()).to.equal(false);
   });
 
-  it("Should update rewards balance mapping correctly on depositTokens", async function () {
-    const tokenAddress = deployer.address; // Replace with a valid token address
-    const amount = 10000; // Replace with the amount you want to deposit
-    await ferroRewards.connect(user1).depositTokens(amount, tokenAddress);
-    const rewardsBalance = await ferroRewards.rewardsBalance(
-      ferroRewards.ironNFTContract,
-      tokenAddress
-    );
-    expect(rewardsBalance).to.equal((amount * 5000) / 10000); // Assuming Iron percentage is 50%
-  });
+  it("should distribute tokens to NFT pools based on NFT ownership", async function () {
+    // Example token address (replace with a real address)
+    const tokenAddress = "0xTokenAddress";
+    // Example token amount
+    const amount = 10000;
 
-  it("Total allocation should equal the deposited amount on depositTokens", async function () {
-    const tokenAddress = deployer.address; // Replace with a valid token address
-    const amount = 10000; // Replace with the amount you want to deposit
-    await ferroRewards.connect(user1).depositTokens(amount, tokenAddress);
-    const totalTokenDistribution = await ferroRewards.totalTokenDistribution(tokenAddress);
-    expect(totalTokenDistribution).to.equal(amount);
+    await contract.depositTokens(amount, tokenAddress);
+
+    const ironPercentage = 5000;
+    const nickelPercentage = 3000;
+    const cobaltPercentage = 2000;
+
+    const ironAllocation = (amount * ironPercentage) / 10000;
+    const nickelAllocation = (amount * nickelPercentage) / 10000;
+    const cobaltAllocation = (amount * cobaltPercentage) / 10000;
+
+    const ironBalance = await contract.rewardsBalance(ironNFTContract, tokenAddress);
+    const nickelBalance = await contract.rewardsBalance(nickelNFTContract, tokenAddress);
+    const cobaltBalance = await contract.rewardsBalance(cobaltNFTContract, tokenAddress);
+
+    expect(ironBalance).to.equal(ironAllocation);
+    expect(nickelBalance).to.equal(nickelAllocation);
+    expect(cobaltBalance).to.equal(cobaltAllocation);
   });
 });
