@@ -25,6 +25,11 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     uint256 public airdropInterval; // Time in hours between airdrops
     uint256 public totalAirdropCount;
 
+    // total nft supply
+    uint256 public totalIronNFTs = 24680;
+    uint256 public totalNickelNFTs = 6789;
+    uint256 public totalCobaltNFTs = 2345;
+
     uint256 private immutable _precisionFactor = 10000;
 
     bool public _paused;
@@ -139,8 +144,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     function airdropTokens() external onlyOwner whenNotPaused {
         require(depositedTokens.length > 0, "No tokens available for airdrop");
 
-        calculateAirdropAmounts(); // Calculate airdrop amounts
-
         // Iterate through the deposited tokens
         for (
             uint256 tokenIndex = 0;
@@ -150,19 +153,33 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
             address tokenAddress = depositedTokens[tokenIndex];
 
             // Ensure there are tokens to distribute
-            uint256 totalBalanceIron = rewardsBalance[ironNFTContract][
+            uint256 rewardBalanceIron = rewardsBalance[ironNFTContract][
                 tokenAddress
             ];
-            uint256 totalBalanceNickel = rewardsBalance[nickelNFTContract][
+            uint256 rewardBalanceNickel = rewardsBalance[nickelNFTContract][
                 tokenAddress
             ];
-            uint256 totalBalanceCobalt = rewardsBalance[cobaltNFTContract][
+            uint256 rewardBalanceCobalt = rewardsBalance[cobaltNFTContract][
                 tokenAddress
             ];
 
-            uint256 totalAirdropIron = totalBalanceIron / totalIronNFTs;
-            uint256 totalAirdropNickel = totalBalanceNickel / totalNickelNFTs;
-            uint256 totalAirdropCobalt = totalBalanceCobalt / totalCobaltNFTs;
+            require(
+                rewardBalanceIron > 0 ||
+                    rewardBalanceNickel > 0 ||
+                    rewardBalanceCobalt > 0,
+                "Too low balance"
+            );
+
+            totalAirdropCount = airdropDuration / airdropInterval;
+            
+            uint256 airdropPerIron = (rewardBalanceIron / totalIronNFTs) / totalAirdropCount;
+            uint256 airdropPerNickel = (rewardBalanceNickel / totalNickelNFTs) / totalAirdropCount;
+            uint256 airdropPerCobalt = (rewardBalanceCobalt / totalCobaltNFTs) / totalAirdropCount;
+
+            // calculate airdrops
+
+            
+
 
             // Iterate through the NFT pools and their respective amounts
             for (uint256 i = 0; i <= currentIndex; i++) {
@@ -172,16 +189,11 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
                 uint256 cobaltNFTs = cobaltAmounts[i];
 
                 // Calculate the distribution amount for each NFT tier
-                uint256 ironDistribution = (totalAirdropIron * ironNFTs) /
-                    totalAirdropCount;
-                uint256 nickelDistribution = (totalAirdropNickel * nickelNFTs) /
-                    totalAirdropCount;
-                uint256 cobaltDistribution = (totalAirdropCobalt * cobaltNFTs) /
-                    totalAirdropCount;
+                uint256 ironDistribution = (airdropPerIron * ironNFTs);
+                uint256 nickelDistribution = (airdropPerNickel * nickelNFTs);
+                uint256 cobaltDistribution = (airdropPerCobalt * cobaltNFTs);
 
-                uint256 totalDistribution = ironDistribution +
-                    nickelDistribution +
-                    cobaltDistribution;
+                uint256 totalDistribution = ironDistribution + nickelDistribution + cobaltDistribution;
 
                 // Transfer tokens to the recipient
                 IERC20(tokenAddress).transfer(recipient, totalDistribution);
@@ -189,20 +201,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         }
     }
 
-    // Calculate airdrop amounts for each NFT tier
-    function calculateAirdropAmounts() internal {
-        totalAirdropCount = airdropDuration / airdropInterval;
-
-        airdropAmountIron = balanceOfIron / totalAirdropCount / totalIronNFTs;
-        airdropAmountNickel =
-            balanceOfNickel /
-            totalAirdropCount /
-            totalNickelNFTs;
-        airdropAmountCobalt =
-            balanceOfCobalt /
-            totalAirdropCount /
-            totalCobaltNFTs;
-    }
 
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
