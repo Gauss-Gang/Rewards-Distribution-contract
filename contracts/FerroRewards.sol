@@ -20,6 +20,11 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     address public nickelNFTContract;
     address public cobaltNFTContract;
 
+    // Define the airdrop parameters
+    uint256 public airdropDuration; // Desired airdrop duration in hours
+    uint256 public airdropInterval; // Time in hours between airdrops
+    uint256 public totalAirdropCount;
+
     uint256 private immutable _precisionFactor = 10000;
 
     bool public _paused;
@@ -36,11 +41,12 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     uint256 private constant _IronPercentage = 5000;
     uint256 private constant _NickelPercentage = 3000;
     uint256 private constant _CobaltPercentage = 2000;
-    /*
+
     mapping(uint256 => address) public addresses;
-    mapping(uint256 => uint256) public amounts;
-    uint256 currentIndex = 50;
-*/
+    mapping(uint256 => uint256) public ironAmounts;
+    mapping(uint256 => uint256) public nickelAmounts;
+    mapping(uint256 => uint256) public cobaltAmounts;
+    uint256 currentIndex = 0;
 
     // Maybe add events for airdrops?
 
@@ -61,7 +67,7 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         cobaltNFTContract = _cobaltNFTContract;
     }
 
-    // Receive function to allow the contract to receives Native Currency 
+    // Receive function to allow the contract to receives Native Currency
     receive() external payable {}
 
     // Pause Token Trading and Transfers
@@ -129,12 +135,11 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         );
     }
 
-    /*
-    // Function to distribute tokens to NFT holders
-    function airdropTokens(
-        address[] calldata recipients
-    ) external onlyOwner whenNotPaused {
-        require(recipients.length > 0, "No recipients provided");
+    // Airdrop tokens
+    function airdropTokens() external onlyOwner whenNotPaused {
+        require(depositedTokens.length > 0, "No tokens available for airdrop");
+
+        calculateAirdropAmounts(); // Calculate airdrop amounts
 
         // Iterate through the deposited tokens
         for (
@@ -144,78 +149,61 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         ) {
             address tokenAddress = depositedTokens[tokenIndex];
 
-            // Calculate the total balance of the specified token address
-            uint256 totalBalance = IERC20(tokenAddress).balanceOf(
-                address(this)
-            );
-
             // Ensure there are tokens to distribute
-            require(totalBalance > 0, "No tokens available for airdrop");
+            uint256 totalBalanceIron = rewardsBalance[ironNFTContract][
+                tokenAddress
+            ];
+            uint256 totalBalanceNickel = rewardsBalance[nickelNFTContract][
+                tokenAddress
+            ];
+            uint256 totalBalanceCobalt = rewardsBalance[cobaltNFTContract][
+                tokenAddress
+            ];
 
-            // Iterate through the NFT pools
-            for (
-                uint256 poolIndex = 0;
-                poolIndex < nftPools.length;
-                poolIndex++
-            ) {
-                NFTPool storage pool = nftPools[poolIndex];
+            uint256 totalAirdropIron = totalBalanceIron / totalIronNFTs;
+            uint256 totalAirdropNickel = totalBalanceNickel / totalNickelNFTs;
+            uint256 totalAirdropCobalt = totalBalanceCobalt / totalCobaltNFTs;
 
-                // Check if there is a balance in the NFT pool for the current token
-                uint256 nftPoolBalance;
-                if (tokenAddress == ironNFTContract) {
-                    nftPoolBalance = distributionAmountIronNFT[tokenAddress][
-                        address(pool.nftContract)
-                    ];
-                } else if (tokenAddress == nickelNFTContract) {
-                    nftPoolBalance = distributionAmountNickelNFT[tokenAddress][
-                        address(pool.nftContract)
-                    ];
-                } else if (tokenAddress == cobaltNFTContract) {
-                    nftPoolBalance = distributionAmountCobaltNFT[tokenAddress][
-                        address(pool.nftContract)
-                    ];
-                }
+            // Iterate through the NFT pools and their respective amounts
+            for (uint256 i = 0; i <= currentIndex; i++) {
+                address recipient = addresses[i];
+                uint256 ironNFTs = ironAmounts[i];
+                uint256 nickelNFTs = nickelAmounts[i];
+                uint256 cobaltNFTs = cobaltAmounts[i];
 
-                if (nftPoolBalance > 0) {
-                    // Divide the tokens in the pool equally among recipients
-                    uint256 amountPerRecipient = nftPoolBalance /
-                        recipients.length;
+                // Calculate the distribution amount for each NFT tier
+                uint256 ironDistribution = (totalAirdropIron * ironNFTs) /
+                    totalAirdropCount;
+                uint256 nickelDistribution = (totalAirdropNickel * nickelNFTs) /
+                    totalAirdropCount;
+                uint256 cobaltDistribution = (totalAirdropCobalt * cobaltNFTs) /
+                    totalAirdropCount;
 
-                    // Create arrays to store the recipients and their respective distribution amounts
-                    address[] memory recipientsToTransfer = new address[](
-                        recipients.length
-                    );
-                    uint256[] memory amountsToTransfer = new uint256[](
-                        recipients.length
-                    );
+                uint256 totalDistribution = ironDistribution +
+                    nickelDistribution +
+                    cobaltDistribution;
 
-                    // Populate the arrays with recipients and equal amounts
-                    for (
-                        uint256 recipientIndex = 0;
-                        recipientIndex < recipients.length;
-                        recipientIndex++
-                    ) {
-                        address recipient = recipients[recipientIndex];
-                        recipientsToTransfer[recipientIndex] = recipient;
-                        amountsToTransfer[recipientIndex] = amountPerRecipient;
-                    }
-
-                    // Transfer tokens to eligible recipients for the current NFT pool
-                    /*BatchTransfer.batchTransfer(
-                    IERC20(tokenAddress),
-                    recipientsToTransfer,
-                    amountsToTransfer
-                ); 
-                    // Update totalTokenDistribution for this token
-                    totalTokenDistribution[tokenAddress] += nftPoolBalance;
-                }
+                // Transfer tokens to the recipient
+                IERC20(tokenAddress).transfer(recipient, totalDistribution);
             }
         }
     }
-    
-    // Function to get the current balance of an NFT pool - is this even needed?
-    function getNFTPoolBalance() external view returns (uint256) {}
-    */
+
+    // Calculate airdrop amounts for each NFT tier
+    function calculateAirdropAmounts() internal {
+        totalAirdropCount = airdropDuration / airdropInterval;
+
+        airdropAmountIron = balanceOfIron / totalAirdropCount / totalIronNFTs;
+        airdropAmountNickel =
+            balanceOfNickel /
+            totalAirdropCount /
+            totalNickelNFTs;
+        airdropAmountCobalt =
+            balanceOfCobalt /
+            totalAirdropCount /
+            totalCobaltNFTs;
+    }
+
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
         return depositedTokens;
