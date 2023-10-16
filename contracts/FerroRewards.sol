@@ -171,7 +171,7 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
             );
 
             totalAirdropCount = airdropDuration / airdropInterval;
-            
+
             uint256 airdropPerIron = (rewardBalanceIron / totalIronNFTs) / totalAirdropCount;
             uint256 airdropPerNickel = (rewardBalanceNickel / totalNickelNFTs) / totalAirdropCount;
             uint256 airdropPerCobalt = (rewardBalanceCobalt / totalCobaltNFTs) / totalAirdropCount;
@@ -200,6 +200,20 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
             }
         }
     }
+
+    // Update the total airdrop count based on the desired duration and interval
+function updateAirdropCount(uint256 _airdropDuration, uint256 _airdropInterval) external onlyOwner {
+    // Ensure the interval is not zero to avoid division by zero
+    require(_airdropInterval > 0, "Airdrop interval must be greater than zero");
+    require(_airdropDuration > 0, "Airdrop duration must be greater than zero");
+
+
+    // Calculate the total airdrop count based on the duration and interval
+    uint256 airdropCount = _airdropDuration / _airdropInterval;
+
+    // Update the totalAirdropCount state variable
+    totalAirdropCount = airdropCount;
+}
 
 
     // Function to get the array of deposited token addresses
