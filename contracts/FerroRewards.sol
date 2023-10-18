@@ -21,8 +21,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     address public cobaltNFTContract;
 
     // Define the airdrop parameters
-    uint256 public airdropDuration; // Desired airdrop duration in hours
-    uint256 public airdropInterval; // Time in hours between airdrops
     uint256 public totalAirdropCount;
 
     // total nft supply
@@ -170,16 +168,16 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
                 "Too low balance"
             );
 
-            totalAirdropCount = airdropDuration / airdropInterval;
+            totalAirdropCount;
 
-            uint256 airdropPerIron = (rewardBalanceIron / totalIronNFTs) / totalAirdropCount;
-            uint256 airdropPerNickel = (rewardBalanceNickel / totalNickelNFTs) / totalAirdropCount;
-            uint256 airdropPerCobalt = (rewardBalanceCobalt / totalCobaltNFTs) / totalAirdropCount;
+            uint256 airdropPerIron = (rewardBalanceIron / totalIronNFTs) /
+                totalAirdropCount;
+            uint256 airdropPerNickel = (rewardBalanceNickel / totalNickelNFTs) /
+                totalAirdropCount;
+            uint256 airdropPerCobalt = (rewardBalanceCobalt / totalCobaltNFTs) /
+                totalAirdropCount;
 
             // calculate airdrops
-
-            
-
 
             // Iterate through the NFT pools and their respective amounts
             for (uint256 i = 0; i <= currentIndex; i++) {
@@ -193,7 +191,9 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
                 uint256 nickelDistribution = (airdropPerNickel * nickelNFTs);
                 uint256 cobaltDistribution = (airdropPerCobalt * cobaltNFTs);
 
-                uint256 totalDistribution = ironDistribution + nickelDistribution + cobaltDistribution;
+                uint256 totalDistribution = ironDistribution +
+                    nickelDistribution +
+                    cobaltDistribution;
 
                 // Transfer tokens to the recipient
                 IERC20(tokenAddress).transfer(recipient, totalDistribution);
@@ -202,19 +202,16 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     }
 
     // Update the total airdrop count based on the desired duration and interval
-function updateAirdropCount(uint256 _airdropDuration, uint256 _airdropInterval) external onlyOwner {
-    // Ensure the interval is not zero to avoid division by zero
-    require(_airdropInterval > 0, "Airdrop interval must be greater than zero");
-    require(_airdropDuration > 0, "Airdrop duration must be greater than zero");
+    function updateAirdropCount(uint256 _totalAirdropCount) external onlyOwner {
+        // Ensure the interval is not zero to avoid division by zero
+        require(
+            _totalAirdropCount > 0,
+            "Airdrop interval must be greater than zero"
+        );
 
-
-    // Calculate the total airdrop count based on the duration and interval
-    uint256 airdropCount = _airdropDuration / _airdropInterval;
-
-    // Update the totalAirdropCount state variable
-    totalAirdropCount = airdropCount;
-}
-
+        // Update the totalAirdropCount state variable
+        totalAirdropCount = _totalAirdropCount;
+    }
 
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
