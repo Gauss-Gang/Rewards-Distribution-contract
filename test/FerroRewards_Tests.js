@@ -96,9 +96,11 @@ it("Should revert when non-owner tries to unpause the contract", async function 
 
     await contract.connect(deployer).depositTokens(amount, tokenAddress);
 
-    const ironNFTContract = "0x1234567890123456789012345678901234567890";
-    const nickelNFTContract = "0x9876543210987654321098765432109876543210";
-    const cobaltNFTContract = "0x5678901234567890123456789012345678901234";
+    const mockIronAddress = await mockIronNFT.getAddress();
+    const mockNickelAddress = await mockNickelNFT.getAddress();
+    const mockCobaltAddress = await mockCobaltNFT.getAddress();
+
+    console.log(mockCobaltAddress, mockNickelAddress, mockIronAddress);
 
     const ironPercentage = 5000;
     const nickelPercentage = 3000;
@@ -108,9 +110,11 @@ it("Should revert when non-owner tries to unpause the contract", async function 
     const nickelAllocation = (amount * nickelPercentage) / 10000;
     const cobaltAllocation = (amount * cobaltPercentage) / 10000;
 
-    const ironBalance = await contract.connect(deployer).rewardsBalance(ironNFTContract, tokenAddress);
-    const nickelBalance = await contract.connect(deployer).rewardsBalance(nickelNFTContract, tokenAddress);
-    const cobaltBalance = await contract.connect(deployer).rewardsBalance(cobaltNFTContract, tokenAddress);
+    console.log(ironAllocation, nickelAllocation, cobaltAllocation);
+
+    const ironBalance = await contract.connect(deployer).rewardsBalance(mockIronAddress, tokenAddress);
+    const nickelBalance = await contract.connect(deployer).rewardsBalance(mockNickelAddress, tokenAddress);
+    const cobaltBalance = await contract.connect(deployer).rewardsBalance(mockCobaltAddress, tokenAddress);
 
     expect(ironBalance).to.equal(ironAllocation);
     expect(nickelBalance).to.equal(nickelAllocation);
