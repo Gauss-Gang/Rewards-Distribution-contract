@@ -195,14 +195,51 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
                     nickelDistribution +
                     cobaltDistribution;
 
-                // Transfer tokens to the recipient
-                IERC20(tokenAddress).transfer(recipient, totalDistribution);
+                // Check if the recipient address is not the zero address before transferring tokens
+                if (recipient != address(0)) {
+                    IERC20(tokenAddress).transfer(recipient, totalDistribution);
+                }
             }
         }
     }
 
-    // Update the total airdrop count based on the desired duration and interval
-    function updateAirdropCount(uint256 _totalAirdropCount) external onlyOwner {
+    // Update the recipient list
+    function updateRecipients(
+        address[] memory _recipientAddresses,
+        uint256[] memory _ironNFTs,
+        uint256[] memory _nickelNFTs,
+        uint256[] memory _cobaltNFTs
+    ) external onlyOwner {
+        require(
+            _recipientAddresses.length == _ironNFTs.length &&
+                _recipientAddresses.length == _nickelNFTs.length &&
+                _recipientAddresses.length == _cobaltNFTs.length,
+            "Number of addresses and NFTs should match."
+        );
+        require(
+            _recipientAddresses.length > 0,
+            "There are no recipients to update."
+        );
+
+        // Loop through the provided recipient addresses
+        for (uint256 i = 0; i < _recipientAddresses.length; i++) {
+            address recipient = _recipientAddresses[i];
+
+            // Update the NFT ownership mappings with the current index
+            addresses[currentIndex] = recipient;
+            ironAmounts[currentIndex] = _ironNFTs[i];
+            nickelAmounts[currentIndex] = _nickelNFTs[i];
+            cobaltAmounts[currentIndex] = _cobaltNFTs[i];
+
+            // Increment the current index
+            currentIndex++;
+        }
+    }
+
+    // Update the total airdrop count
+    function updateTotalAirdropCount(
+        uint256 _totalAirdropCount
+    ) external onlyOwner {
         // Ensure the interval is not zero to avoid division by zero
         require(
             _totalAirdropCount > 0,

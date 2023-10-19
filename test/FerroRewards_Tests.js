@@ -63,7 +63,7 @@ describe("FerroRewards", function () {
     // Example token address (replace with a real address)
     const tokenAddress = await rewardToken.getAddress();
     // Example token amount
-    const amount = 10000;
+    const amount = 100000;
 
 
     await rewardToken.connect(deployer).approve(contract.getAddress(), amount);
@@ -91,7 +91,7 @@ it("Should revert when non-owner tries to unpause the contract", async function 
 
     const tokenAddress = await rewardToken.getAddress();
     
-    const amount = 10000;
+    const amount = 100000;
     await rewardToken.connect(deployer).approve(contract.getAddress(), amount);
 
     await contract.connect(deployer).depositTokens(amount, tokenAddress);
@@ -100,8 +100,6 @@ it("Should revert when non-owner tries to unpause the contract", async function 
     const mockNickelAddress = await mockNickelNFT.getAddress();
     const mockCobaltAddress = await mockCobaltNFT.getAddress();
 
-    console.log(mockCobaltAddress, mockNickelAddress, mockIronAddress);
-
     const ironPercentage = 5000;
     const nickelPercentage = 3000;
     const cobaltPercentage = 2000;
@@ -109,8 +107,6 @@ it("Should revert when non-owner tries to unpause the contract", async function 
     const ironAllocation = (amount * ironPercentage) / 10000;
     const nickelAllocation = (amount * nickelPercentage) / 10000;
     const cobaltAllocation = (amount * cobaltPercentage) / 10000;
-
-    console.log(ironAllocation, nickelAllocation, cobaltAllocation);
 
     const ironBalance = await contract.connect(deployer).rewardsBalance(mockIronAddress, tokenAddress);
     const nickelBalance = await contract.connect(deployer).rewardsBalance(mockNickelAddress, tokenAddress);
@@ -123,32 +119,55 @@ it("Should revert when non-owner tries to unpause the contract", async function 
 
   it("should perform airdrop of tokens correctly", async function () {
     const tokenAddress = await rewardToken.getAddress();
-    const amount = 10000;
-
+    const amount = 100000;
+  
     // Deposit tokens and simulate NFT ownership
     await rewardToken.connect(deployer).approve(contract.getAddress(), amount);
     await contract.connect(deployer).depositTokens(amount, tokenAddress);
-    
-    // Simulate NFT ownership for recipients
-    await contract.connect(deployer).addIronNFT(recipient1.address, 1);
-    await contract.connect(deployer).addNickelNFT(recipient1.address, 1);
-    await contract.connect(deployer).addCobaltNFT(recipient1.address, 1);
+  
+    // Check if recipient1 owns NFTs
+    const recipient1IronBalance = await mockIronNFT.balanceOf(recipient1.getAddress());
+    const recipient1NickelBalance = await mockNickelNFT.balanceOf(recipient1.getAddress());
+    const recipient1CobaltBalance = await mockCobaltNFT.balanceOf(recipient1.getAddress());
+  
+    // Check if recipient2 owns NFTs
+    const recipient2IronBalance = await mockIronNFT.balanceOf(recipient2.getAddress());
 
-    await contract.connect(deployer).addIronNFT(recipient2.address, 1);
-
-    // Set the airdrop duration and interval
-    await contract.connect(deployer).updateAirdropCount(6, 1);
-
+  
+    // Assert that the recipients own the NFTs
+    expect(recipient1IronBalance).to.equal(1);
+    expect(recipient1NickelBalance).to.equal(1);
+    expect(recipient1CobaltBalance).to.equal(1);
+    expect(recipient2IronBalance).to.equal(1);
+  
+    await contract.connect(deployer).updateTotalAirdropCount(1);
+  
+    const initialRecipient1Balance = await rewardToken.balanceOf(recipient1.getAddress());
+    const initialRecipient2Balance = await rewardToken.balanceOf(recipient2.getAddress());
+  
+  
+    // Update the recipient addresses and NFT amounts using the smart contract function
+    // Update the recipient addresses and NFT amounts using the smart contract function
+  await contract.connect(deployer).updateRecipients(
+  [recipient1.getAddress(), recipient2.getAddress()], // Provide recipient addresses
+  [1, 1], // Set the number of Iron NFTs for each recipient
+  [1, 0], // Set the number of Nickel NFTs (0 for recipient2)
+  [1, 0] // Set the number of Cobalt NFTs (0 for recipient2)
+  );
+  
     // Perform the airdrop
     await contract.connect(deployer).airdropTokens();
+  
+    
 
     // Check recipient1's token balance after airdrop
-    const recipient1Balance = await rewardToken.balanceOf(recipient1.address);
-    expect(recipient1Balance).to.equal(3000); // 3 hours x 1000 tokens
-
+    const recipient1Balance = await rewardToken.balanceOf(recipient1.getAddress());
+    expect(recipient1Balance).to.equal(14);
+  
     // Check recipient2's token balance after airdrop
-    const recipient2Balance = await rewardToken.balanceOf(recipient2.address);
-    expect(recipient2Balance).to.equal(1000); // 1 hour x 1000 tokens
+    const recipient2Balance = await rewardToken.balanceOf(recipient2.getAddress());
+    expect(recipient2Balance).to.equal(2); 
   });
+  
 
 });
