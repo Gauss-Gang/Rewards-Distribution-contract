@@ -131,7 +131,7 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
             nickelAllocation +
             cobaltAllocation;
         require(
-            totalAllocation <= amount,
+            totalAllocation == amount,
             "Total distribution does not match allocations"
         );
     }
@@ -160,8 +160,8 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
             ];
 
             require(
-                rewardBalanceIron > 0 ||
-                    rewardBalanceNickel > 0 ||
+                rewardBalanceIron > 0 &&
+                    rewardBalanceNickel > 0 &&
                     rewardBalanceCobalt > 0,
                 "Too low balance"
             );
