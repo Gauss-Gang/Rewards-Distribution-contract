@@ -168,8 +168,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
                 "Too low balance"
             );
 
-            totalAirdropCount;
-
             uint256 airdropPerIron = (rewardBalanceIron / totalIronNFTs) /
                 totalAirdropCount;
             uint256 airdropPerNickel = (rewardBalanceNickel / totalNickelNFTs) /
