@@ -30,8 +30,6 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
 
     uint256 private immutable _precisionFactor = 10000;
 
-    bool public _paused;
-
     // Events
 
     // Event to log when the contract is paused
@@ -251,10 +249,5 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
     // Function to get the array of deposited token addresses
     function getDepositedTokens() external view returns (address[] memory) {
         return depositedTokens;
-    }
-
-    // Function to check if the contract is paused
-    function isPaused() external view returns (bool) {
-        return _paused;
     }
 }
