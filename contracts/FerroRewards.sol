@@ -62,7 +62,7 @@ contract FerroRewards is Ownable, Pausable, ReentrancyGuard {
         address _nickelNFTContract,
         address _cobaltNFTContract
     ) {
-        // Initializing the NFT pools with the correct contract addresses
+        // Initializing the contract addresses
         ironNFTContract = _ironNFTContract;
         nickelNFTContract = _nickelNFTContract;
         cobaltNFTContract = _cobaltNFTContract;
