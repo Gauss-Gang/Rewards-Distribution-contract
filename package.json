@@ -19,7 +19,7 @@
   "homepage": "https://github.com/Gauss-Gang/RewardsDistribution-contract#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-    "hardhat": "^2.18.1"
+    "hardhat": "^2.22.3"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.0"

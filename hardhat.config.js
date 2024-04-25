@@ -1,6 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
-
-// const { mnemonic } = require('./secrets.json');
+const { mnemonic } = require('./secrets.json');
 
 /** @type import('hardhat/config').HardhatUserConfig */
 
@@ -23,16 +22,16 @@ module.exports = {
       },
     },
   },
-  /*networks: {
-    gaussTestnet: {
-      url: "https://rpc.giltestnet.com",
+  networks: {
+    testnet: {
+      url: "http://10.0.0.24:8554",
       chainId: 1452,
       accounts: {mnemonic: mnemonic}
     },
-    gaussMainnet: {
+    mainnet: {
       url: "https://rpc.gaussgang.com",
       chainId: 1777,
       accounts: {mnemonic: mnemonic}
     }
-  } */
+  }
 };

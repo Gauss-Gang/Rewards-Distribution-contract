@@ -21,3 +21,5 @@ typechain-types
 cache
 artifacts
 secrets.json
+secrets_testnet.json
+secrets_mainnet.json
