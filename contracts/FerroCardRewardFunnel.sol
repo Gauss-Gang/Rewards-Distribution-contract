@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
 import {IERC20} from "./libraries/interfaces/IERC20.sol";
@@ -25,14 +25,14 @@ contract FerroCardRewardFunnel is Ownable, Pausable, ReentrancyGuard {
     uint256 public totalNickelNFTs; // Final Supply = 6789
     uint256 public totalCobaltNFTs; // Final Supply = 2345
 
-    uint256 private immutable _precisionFactor = 10000;
+    uint256 private immutable _precisionFactor = 100000;
 
-    uint256 private _dripRate = 10; // 0.1% of the total balance each hour
+    uint256 private _dripRate = 10; // 0.01% of the total balance each hour
     uint256 private _batchSize = 25;
     
-    uint256 private constant _IronPercentage = 5000;
-    uint256 private constant _NickelPercentage = 3000;
-    uint256 private constant _CobaltPercentage = 2000;
+    uint256 private _IronPercentage = 50000;
+    uint256 private _NickelPercentage = 30000;
+    uint256 private _CobaltPercentage = 20000;
 
     uint256 currentIndex = 0;
 
@@ -151,8 +151,9 @@ contract FerroCardRewardFunnel is Ownable, Pausable, ReentrancyGuard {
                 uint256 distributionAmount = airdropPerFerroCard * nftAmount;
 
                 // Check if the recipient address is not the zero address before transferring tokens
-                if (recipient != address(0)) {
+                if (recipient != address(0) && distributionAmount > 0) {
                     IERC20(tokenAddress).transfer(recipient, distributionAmount);
+                    totalTokenDistribution[tokenAddress] += distributionAmount;
                 }
             }
         }
@@ -190,8 +191,9 @@ contract FerroCardRewardFunnel is Ownable, Pausable, ReentrancyGuard {
                 uint256 distributionAmount = airdropPerFerroCard * nftAmount;
 
                 // Check if the recipient address is not the zero address before transferring tokens
-                if (recipient != address(0)) {
+                if (recipient != address(0) && distributionAmount > 0) {
                     IERC20(tokenAddress).transfer(recipient, distributionAmount);
+                    totalTokenDistribution[tokenAddress] += distributionAmount;
                 }
             }
         }
@@ -229,8 +231,9 @@ contract FerroCardRewardFunnel is Ownable, Pausable, ReentrancyGuard {
                 uint256 distributionAmount = airdropPerFerroCard * nftAmount;
 
                 // Check if the recipient address is not the zero address before transferring tokens
-                if (recipient != address(0)) {
+                if (recipient != address(0) && distributionAmount > 0) {
                     IERC20(tokenAddress).transfer(recipient, distributionAmount);
+                    totalTokenDistribution[tokenAddress] += distributionAmount;
                 }
             }
         }
@@ -279,6 +282,15 @@ contract FerroCardRewardFunnel is Ownable, Pausable, ReentrancyGuard {
     function updateDripRate(uint256 newDripRate) public onlyOwner() {
         _dripRate = newDripRate;
     }
+    
+    
+    // Function to update the Drip Rate of the Ferro Card Reward Funnel
+    function updateFerroPercentages(uint256 _newIronRate, uint256 _newNickelRate, uint256 _newCobaltRate) public onlyOwner() {
+        require(_newIronRate + _newNickelRate + _newCobaltRate == _precisionFactor, "FCRF: Rate does not equal precision factor");
+        _IronPercentage = _newIronRate;
+        _NickelPercentage = _newNickelRate;
+        _CobaltPercentage = _newCobaltRate;
+    }
 
 
     // Function to update the Batch Size of the Ferro Card Reward Funnel
@@ -293,16 +305,13 @@ contract FerroCardRewardFunnel is Ownable, Pausable, ReentrancyGuard {
     }
 
 
-    // Function to get the current balance of a specific Token inside the Ferro Card Reward Funnel
-    function getRewardsBalance(address token) external view returns (uint256,uint256,uint256) {
-        uint256 ironRewardBalance = rewardsBalance[ironNFTContract][token];
-        uint256 nickelRewardBalance = rewardsBalance[nickelNFTContract][token];
-        uint256 cobaltRewardBalance = rewardsBalance[cobaltNFTContract][token];
-        return (ironRewardBalance, nickelRewardBalance, cobaltRewardBalance);
+    // Function to get the Total Amount of a specific Token Airdroped to all Ferro Holders
+    function getTotalAirdroped(address token) external view returns (uint256) {
+        return totalTokenDistribution[token];
     }
 
 
-    // Function to get the current balance of a specific Token inside the Ferro Card Reward Funnel
+    // Function to get the current Amount Per Ferro of a specific Token inside the Ferro Card Reward Funnel
     function getAmountPerFerro(address token) external view returns (uint256,uint256,uint256) {
         uint256 ironRewardBalance = rewardsBalance[ironNFTContract][token];
         uint256 totalPerIron = (ironRewardBalance / totalIronNFTs);
@@ -317,6 +326,15 @@ contract FerroCardRewardFunnel is Ownable, Pausable, ReentrancyGuard {
         uint256 airdropPerCobalt = Math.mulDiv(totalPerCobalt, _dripRate, _precisionFactor);
 
         return (airdropPerIron, airdropPerNickel, airdropPerCobalt);
+    }
+
+
+    // Function to get the current balance of a specific Token inside the Ferro Card Reward Funnel
+    function getRewardsBalance(address token) external view returns (uint256,uint256,uint256) {
+        uint256 ironRewardBalance = rewardsBalance[ironNFTContract][token];
+        uint256 nickelRewardBalance = rewardsBalance[nickelNFTContract][token];
+        uint256 cobaltRewardBalance = rewardsBalance[cobaltNFTContract][token];
+        return (ironRewardBalance, nickelRewardBalance, cobaltRewardBalance);
     }
 
 

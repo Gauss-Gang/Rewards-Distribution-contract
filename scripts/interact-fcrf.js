@@ -5,12 +5,12 @@ const { setTimeout } = require("timers/promises");
 async function main() {
 
     // Following code is to use the contract at the deployed address
-    const deployedAddress = "0xFdcFc59519873873ec5059bc66669019FF3C7303";
+    const deployedAddress = "0xF5eeAA545ffD7634aa58Aa2Eb08354f76477E9cF";
     const ContractFactory = await ethers.getContractFactory("FerroCardRewardFunnel");
     const contract = await ContractFactory.attach(deployedAddress);
     console.log("FCRF: connected to FCRF Card smart contract");
 
-    const [owner,,,,nftOwner] = await ethers.getSigners();
+    const [owner,,,,,,,,,contractOwner] = await ethers.getSigners();
     console.log("Interacting with contracts with the account:", owner.address);
 
 /*
@@ -30,7 +30,7 @@ async function main() {
 /*
     // Deposit tokens into the Ferro Reward Funnel
     const amount = ethers.parseEther("2500000"); // 2.5 Million tokens
-    const tokenAddress = "0xEB039260c317914207B01727de33c27Bd806C6eF"; // Address of the token
+    const tokenAddress = "0xb45fC65405B1a28Bb24AF49fe2caa278525Fe977"; // Address of the token
 
         // First, approve the contract to spend tokens on your behalf
         const tokenContract = await ethers.getContractAt("IERC20", tokenAddress);
@@ -44,7 +44,7 @@ async function main() {
     console.log("Tokens deposited into the Ferro Reward Funnel.");
 */
 
-
+/*
     // Airdrop tokens for Iron tier
     console.log("Airdropping tokens for Iron tier...");
     const batchNum = 0;
@@ -57,6 +57,7 @@ async function main() {
     console.log("Tokens airdropped for Iron tier.");
 
     await setTimeout(8000);
+
 
     // Airdrop tokens for Nickel tier
     console.log("Airdropping tokens for Nickel tier...");
@@ -77,10 +78,11 @@ async function main() {
         await setTimeout(8000);
     }
     console.log("Tokens airdropped for Cobalt tier.");
-
+*/
 
 
 /*
+    await setTimeout(8000);
     // Update recipients
     const recipientAddresses = [
         '0xc09459DF0D717a7d0681b8fE6F7A115c21C58182',
@@ -1213,9 +1215,10 @@ async function main() {
     console.log("Recipients updated.");
 */
 
+
 /*
     // Update drip rate
-    const newDripRate = 20; // New drip rate
+    const newDripRate = 10; // New drip rate
     console.log("Updating drip rate...");
     await contract.updateDripRate(newDripRate);
     console.log("Drip rate updated.");
@@ -1230,7 +1233,7 @@ async function main() {
 
 /*
     // Get rewards balance for a token
-    const tokenAddress = "TOKEN_ADDRESS_HERE"; // Address of the token
+    const tokenAddress = "0xEB039260c317914207B01727de33c27Bd806C6eF"; // Address of the token
     console.log("Getting rewards balance for a token...");
     const [ironRewardBalance, nickelRewardBalance, cobaltRewardBalance] = await contract.getRewardsBalance(tokenAddress);
     console.log("Rewards balance for Iron:", ironRewardBalance);
@@ -1246,6 +1249,10 @@ async function main() {
     console.log("Airdrop per Nickel:", airdropPerNickel);
     console.log("Airdrop per Cobalt:", airdropPerCobalt);
 */
+
+    const newOwner = "0xCa7250117ddA2DD45d9e4DA1bb4Def40fA727dC6";
+    await contract.transferOwnership(newOwner);
+    console.log("FCRF: transfered owner of contract to:", newOwner);
 
 }    
 
