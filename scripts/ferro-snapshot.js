@@ -130,6 +130,7 @@ async function main() {
   async function getSnapshotForAllNFTs() {
     const combinedData = {};
 
+    console.log("Working on Iron Ferro Cards...");
     for (let i = 0; i < IRON_SUPPLY; i++) {
       let owner = await ironContract.ownerOf(i);
       if (!combinedData[owner]) {
@@ -141,7 +142,9 @@ async function main() {
       }
       combinedData[owner].iron += 1;
     }
+    console.log("Iron Snapshot finished!");
 
+    console.log("Working on Nickel Ferro Cards...");
     for (let i = 0; i < NICKEL_SUPPLY; i++) {
       let owner = await nickelContract.ownerOf(i);
       if (!combinedData[owner]) {
@@ -153,7 +156,9 @@ async function main() {
       }
       combinedData[owner].nickel += 1;
     }
+    console.log("Nickel Snapshot finished!");
 
+    console.log("Working on Cobalt Ferro Cards...");
     for (let i = 0; i < COBALT_SUPPLY; i++) {
       let owner = await cobaltContract.ownerOf(i);
       if (!combinedData[owner]) {
@@ -165,6 +170,7 @@ async function main() {
       }
       combinedData[owner].cobalt += 1;
     }
+    console.log("Cobalt Snapshot finished!");
 
     return combinedData;
 }

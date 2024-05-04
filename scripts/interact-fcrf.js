@@ -1250,10 +1250,11 @@ async function main() {
     console.log("Airdrop per Cobalt:", airdropPerCobalt);
 */
 
+/*
     const newOwner = "0xCa7250117ddA2DD45d9e4DA1bb4Def40fA727dC6";
     await contract.transferOwnership(newOwner);
     console.log("FCRF: transfered owner of contract to:", newOwner);
-
+*/
 }    
 
 
